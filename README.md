@@ -1,24 +1,45 @@
 # Deep Research Engine
 
-An AI-powered Multi-Agent Research System that autonomously explores topics, gathers information from multiple web sources, and generates comprehensive research reports using collaborative AI agents.
+An AI-powered Multi-Agent Research System that searches the web, extracts relevant information, generates structured research reports, and evaluates them using collaborative AI agents.
 
 ## Overview
 
-Deep Research Engine is a multi-agent research application built using LangChain, OpenAI, and Tavily.
+Deep Research Engine is a multi-agent research application built using Python, LangChain, and OpenAI.
 
-Instead of relying on a single language model to perform the entire research task, the system divides the process into specialized stages. Each agent or chain is responsible for a particular task, allowing the overall workflow to combine web search, content extraction, report generation, and report evaluation.
+The system divides the research process into four stages:
 
-The system follows a sequential research pipeline:
+1. **Search Agent:** Searches the web for recent and relevant information using Tavily.
+2. **Reader Agent:** Selects a relevant URL from the search results and extracts its web page content using BeautifulSoup.
+3. **Writer Chain:** Combines the search results and extracted content to generate a structured research report.
+4. **Critic Chain:** Evaluates the generated report and provides a score, strengths, areas for improvement, and an overall verdict.
 
-1. **Search:** Finds relevant web pages related to the given research topic.
-2. **Read:** Extracts useful information from selected web pages.
-3. **Write:** Generates a structured research report using the gathered information.
-4. **Critique:** Evaluates the generated report and provides feedback.
+The application uses LangChain's `create_agent()` interface for the Search and Reader agents, while the Writer and Critic components are implemented using LangChain Expression Language (LCEL).
 
-The application provides a Streamlit-based interface and supports Docker containerization for deployment.
+A Streamlit interface provides an interactive way to submit research topics, view generated reports, examine critic feedback, and download reports in Markdown format.
+
+The project also includes Docker support for containerizing the application.
+
+## Technologies & Tools
+
+| Category | Technologies / Tools |
+|---|---|
+| Programming Language | Python |
+| LLM Framework | LangChain |
+| Language Models | OpenAI Chat Models (`ChatOpenAI`) |
+| Agent Development | `create_agent()` |
+| Chain Development | LangChain Expression Language (LCEL) |
+| Prompt Engineering | `ChatPromptTemplate` |
+| Output Processing | `StrOutputParser` |
+| Web Search | Tavily |
+| Web Scraping | BeautifulSoup |
+| HTTP Requests | Requests |
+| User Interface | Streamlit |
+| Environment Management | `python-dotenv` |
+| Containerization | Docker |
 
 ## Table of Contents
 
+- [Overview](#overview)
 - [Technologies & Tools](#technologies--tools)
 - [Features](#features)
 - [System Architecture](#system-architecture)
@@ -29,143 +50,165 @@ The application provides a Streamlit-based interface and supports Docker contain
 - [Environment Variables](#environment-variables)
 - [Future Improvements](#future-improvements)
 
-## Technologies & Tools
-
-| Category | Technologies / Tools |
-|---|---|
-| Programming Language | Python |
-| LLM Framework | LangChain |
-| Language Models | OpenAI Chat Models (`ChatOpenAI`) |
-| Agent Development | LangChain Agents |
-| Chain Development | LangChain Expression Language (LCEL) |
-| Prompt Engineering | `ChatPromptTemplate` |
-| Output Processing | `StrOutputParser` |
-| Web Search | Tavily |
-| Web Scraping | BeautifulSoup |
-| HTTP Requests | Requests |
-| HTML Parsing | lxml |
-| User Interface | Streamlit |
-| Containerization | Docker |
-| Environment Management | Python Virtual Environments, `python-dotenv` |
-
 ## Features
 
-- **Multi-Agent Architecture:** Divides the research process into specialized agents and processing chains.
-- **Automated Web Research:** Uses Tavily to search for relevant information on the web.
-- **Web Content Extraction:** Uses BeautifulSoup to extract readable content from selected web pages.
-- **Automated Report Generation:** Uses an LLM-powered writer chain to generate structured research reports.
-- **Report Evaluation:** Uses a critic chain to evaluate the generated report and provide feedback.
+- **Multi-Agent Architecture:** Uses specialized Search and Reader agents for web research.
+- **Automated Web Search:** Retrieves relevant search results using the Tavily API.
+- **Web Content Extraction:** Scrapes selected web pages and extracts readable text using BeautifulSoup.
+- **Automated Report Generation:** Generates structured research reports using an LLM-powered LCEL chain.
+- **Report Evaluation:** Evaluates generated reports and provides scores and constructive feedback.
 - **Streamlit Interface:** Provides an interactive interface for submitting research topics and viewing results.
-- **Docker Support:** Containerizes the application for consistent execution and deployment.
+- **Authentication:** Includes a username and password-based login mechanism.
+- **Report Download:** Allows users to download generated reports in Markdown format.
+- **Docker Support:** Includes a Dockerfile for building and running the application in a container.
 
 ## System Architecture
 
-The application consists of four main processing components:
+The application consists of four main processing components coordinated by a central research pipeline.
 
-| Component | Responsibility |
-|---|---|
-| Search Agent | Searches the web for relevant information using Tavily. |
-| Reader Agent | Extracts web page content using the web scraping tool. |
-| Writer Chain | Generates a research report from the collected information. |
-| Critic Chain | Evaluates the generated report and provides feedback. |
+| Component | Implementation | Responsibility |
+|---|---|---|
+| Search Agent | LangChain `create_agent()` | Searches for relevant web information using the `web_search` tool. |
+| Reader Agent | LangChain `create_agent()` | Selects a relevant URL and extracts its content using the `web_scrape` tool. |
+| Writer Chain | LCEL | Generates a structured research report from the gathered information. |
+| Critic Chain | LCEL | Evaluates the generated report and provides feedback. |
 
 ### Architecture Diagram
 
 ```mermaid
 flowchart TD
     A["User submits research topic"] --> B["Streamlit Application"]
-    B --> C["Research Pipeline"]
+    B --> C["run_research_pipeline()"]
 
     C --> D["Search Agent"]
-    D --> E["Tavily Web Search"]
+    D --> E["web_search Tool"]
+    E --> F["Tavily API"]
+    F --> D
 
-    E --> F["Reader Agent"]
-    F --> G["Web Scraping Tool"]
-    G --> H["BeautifulSoup"]
+    D --> G["Search Results"]
 
-    H --> I["Gathered Research Content"]
-    I --> J["Writer Chain"]
-    J --> K["Generated Research Report"]
+    G --> H["Reader Agent"]
+    H --> I["web_scrape Tool"]
+    I --> J["Requests + BeautifulSoup"]
+    J --> H
 
-    K --> L["Critic Chain"]
-    L --> M["Report Evaluation and Feedback"]
+    H --> K["Scraped Content"]
 
-    M --> N["Display Research Results"]
-    N --> B
+    G --> L["Combine Research Content"]
+    K --> L
+
+    L --> M["Writer Chain"]
+    M --> N["Generated Research Report"]
+
+    N --> O["Critic Chain"]
+    O --> P["Critic Feedback"]
+
+    G --> Q["Final Pipeline State"]
+    K --> Q
+    N --> Q
+    P --> Q
+
+    Q --> R["Streamlit Results"]
 ```
 
 ## Research Workflow
 
-The research pipeline coordinates the agents and chains to complete the research task.
+The research pipeline is implemented in `pipeline.py` through the `run_research_pipeline()` function.
 
 ### 1. Search Agent
 
-The Search Agent identifies relevant web pages based on the research topic.
+The Search Agent discovers relevant information about the research topic.
 
+- Built using LangChain's `create_agent()` interface.
 - Uses an OpenAI chat model.
-- Invokes the `web_search` tool.
-- Uses Tavily to retrieve relevant search results.
-- Provides URLs and search-result information for the next stage.
+- Has access to the custom `web_search` tool.
+- Uses Tavily to retrieve up to two search results.
+- Returns the final search response containing titles, URLs, and content snippets.
+
+**Tool:** `web_search()` in `tools.py`
+
+The tool extracts the title, URL, and first 300 characters of the content from each Tavily search result.
 
 ### 2. Reader Agent
 
-The Reader Agent extracts information from selected web pages.
+The Reader Agent performs deeper reading by selecting a relevant web page from the search results.
 
-- Uses an OpenAI chat model.
-- Invokes the `web_scrape` tool.
-- Uses Requests to retrieve web page content.
-- Uses BeautifulSoup to parse and extract readable text.
-- Returns the extracted content for report generation.
+- Built using LangChain's `create_agent()` interface.
+- Uses the same OpenAI chat model.
+- Has access to the custom `web_scrape` tool.
+- Receives the first 1,000 characters of the Search Agent's output.
+- Decides which URL is most relevant and invokes the scraping tool.
+
+**Tool:** `web_scrape()` in `tools.py`
+
+The scraping tool:
+
+- Sends an HTTP GET request using Requests.
+- Parses the HTML using BeautifulSoup.
+- Removes `style`, `nav`, `footer`, and `script` elements.
+- Extracts readable text from the page.
+- Returns up to 3,000 characters of extracted content.
 
 ### 3. Writer Chain
 
-The Writer Chain generates the research report using the information gathered by the previous stages.
+The Writer Chain generates a structured research report using the information gathered by the previous stages.
 
+- Implemented using LangChain Expression Language (LCEL).
 - Uses `ChatPromptTemplate` to structure the input.
-- Passes the gathered research content to the language model.
-- Uses LangChain Expression Language (LCEL) to connect the prompt, model, and output parser.
-- Uses `StrOutputParser` to obtain the generated report as text.
+- Receives the research topic and combined research content.
+- Passes the formatted prompt to the OpenAI chat model.
+- Uses `StrOutputParser` to return the generated report as text.
+
+The generated report follows this structure:
+
+- Introduction
+- Key Findings (minimum three well-explained points)
+- Conclusion
+- Sources
 
 ### 4. Critic Chain
 
-The Critic Chain evaluates the generated research report.
+The Critic Chain evaluates the report generated by the Writer Chain.
 
-- Uses a separate prompt to assess the report.
-- Evaluates the generated content and provides feedback.
-- Returns the feedback as part of the research pipeline output.
+- Implemented using LCEL.
+- Uses a separate `ChatPromptTemplate`.
+- Receives the generated report as input.
+- Evaluates the report and provides a score out of 10.
+- Identifies strengths and areas for improvement.
+- Provides a one-line verdict.
 
-### Pipeline Execution
+The Critic Chain returns feedback separately. It does not automatically send the feedback back to the Writer Chain for report revision.
 
-The overall workflow is orchestrated by `pipeline.py`.
+## Pipeline Execution and State Management
+
+The `run_research_pipeline()` function coordinates all four stages and maintains their outputs in a shared Python dictionary named `state`.
+
+The pipeline executes sequentially:
 
 ```mermaid
 flowchart TD
     A["Research Topic"] --> B["Search Agent"]
-    B --> C["Search Results"]
+    B --> C["Store Search Results"]
     C --> D["Reader Agent"]
-    D --> E["Scraped Content"]
-    E --> F["Writer Chain"]
-    F --> G["Research Report"]
-    G --> H["Critic Chain"]
-    H --> I["Feedback"]
-
-    C --> J["Pipeline State"]
-    E --> J
-    G --> J
-    I --> J
+    D --> E["Store Scraped Content"]
+    E --> F["Combine Search Results and Scraped Content"]
+    F --> G["Writer Chain"]
+    G --> H["Store Generated Report"]
+    H --> I["Critic Chain"]
+    I --> J["Store Critic Feedback"]
+    J --> K["Return Final State"]
 ```
 
-The pipeline maintains a shared state dictionary containing the outputs of each stage:
+The final state dictionary contains the following keys:
 
 | State Key | Description |
 |---|---|
-| `search_results` | Results returned by the Search Agent. |
-| `scraped_content` | Content extracted from selected web pages. |
+| `search_results` | Final text response returned by the Search Agent. |
+| `scraped_content` | Final text response returned by the Reader Agent. |
 | `report` | Research report generated by the Writer Chain. |
-| `feedback` | Evaluation and feedback provided by the Critic Chain. |
+| `feedback` | Evaluation and feedback returned by the Critic Chain. |
 
-The final state contains the outputs produced throughout the research workflow.
-
+The function returns this dictionary to the calling application.
 
 ## Project Structure
 
@@ -187,13 +230,13 @@ deep-research-engine/
 
 | File | Description |
 |---|---|
-| `agents.py` | Defines the Search and Reader agents, along with the Writer and Critic chains. |
-| `tools.py` | Implements the web search and web scraping tools. |
-| `pipeline.py` | Orchestrates the research workflow and coordinates the agents and chains. |
-| `app.py` | Provides the Streamlit application interface. |
+| `agents.py` | Defines the Search and Reader agents, Writer Chain, and Critic Chain. |
+| `tools.py` | Implements the Tavily-based web search tool and BeautifulSoup-based web scraping tool. |
+| `pipeline.py` | Coordinates the agents and chains, maintains the pipeline state, and returns the final results. |
+| `app.py` | Implements the Streamlit interface, authentication, pipeline execution, and result presentation. |
 | `requirements.txt` | Lists the Python dependencies required by the application. |
-| `Dockerfile` | Defines the instructions for building the application's Docker image. |
-| `.dockerignore` | Specifies files and directories to exclude from the Docker build context. |
+| `Dockerfile` | Contains the instructions for building the application's Docker image. |
+| `.dockerignore` | Specifies files and directories excluded from the Docker build context. |
 | `.gitignore` | Specifies files and directories Git should ignore. |
 
 ## Getting Started
@@ -239,16 +282,11 @@ pip install -r requirements.txt
 
 ### 4. Configure Environment Variables
 
-Create a `.env` file in the root directory and configure the required API keys.
+Create a `.env` file in the repository root and add the required credentials.
 
-```env
-OPENAI_API_KEY=your_openai_api_key
-TAVILY_API_KEY=your_tavily_api_key
-```
+Refer to the [Environment Variables](#environment-variables) section for the complete list.
 
 ### 5. Run the Application
-
-Start the Streamlit application:
 
 ```bash
 streamlit run app.py
@@ -260,11 +298,13 @@ Open the local URL displayed in the terminal, typically:
 http://localhost:8501
 ```
 
-Enter a research topic and run the research pipeline.
+Log in using the application credentials configured in your `.env` file.
+
+Enter a research topic and select **Start Research** to execute the pipeline.
 
 ## Running with Docker
 
-The application includes a Dockerfile to build and run the system inside a container.
+The repository includes a Dockerfile to build and run the application inside a container.
 
 ### 1. Build the Docker Image
 
@@ -274,21 +314,20 @@ docker build -t deep-research-engine .
 
 ### 2. Run the Container
 
-Pass the required API keys as environment variables:
+If your `.env` file contains all required environment variables, you can pass them to the container using:
 
 ```bash
 docker run -d \
   --name deep-research-engine \
+  --env-file .env \
   -p 8501:8501 \
-  -e OPENAI_API_KEY=your_openai_api_key \
-  -e TAVILY_API_KEY=your_tavily_api_key \
   deep-research-engine
 ```
 
-On Windows Command Prompt, use a single line:
+**Windows Command Prompt:**
 
 ```cmd
-docker run -d --name deep-research-engine -p 8501:8501 -e OPENAI_API_KEY=your_openai_api_key -e TAVILY_API_KEY=your_tavily_api_key deep-research-engine
+docker run -d --name deep-research-engine --env-file .env -p 8501:8501 deep-research-engine
 ```
 
 ### 3. Access the Application
@@ -299,16 +338,35 @@ Open the following URL in your browser:
 http://localhost:8501
 ```
 
+The Dockerfile should configure Streamlit to listen on port `8501` and accept connections from outside the container.
+
 ## Environment Variables
 
-The application requires API keys to access external services.
+The application requires API credentials and application login credentials.
 
 | Environment Variable | Purpose |
 |---|---|
-| `OPENAI_API_KEY` | Provides access to OpenAI language models. |
+| `OPENAI_API_KEY` | Provides access to OpenAI chat models. |
 | `TAVILY_API_KEY` | Enables web search through the Tavily API. |
+| `APP_USERNAME` | Username required to access the Streamlit application. |
+| `APP_PASSWORD` | Password required to access the Streamlit application. |
 
-**Important:** Never commit actual API keys or `.env` files to GitHub. Use environment variables to provide credentials securely.
+Example `.env` file:
+
+```env
+OPENAI_API_KEY=your_openai_api_key
+TAVILY_API_KEY=your_tavily_api_key
+
+APP_USERNAME=your_username
+APP_PASSWORD=your_password
+```
+
+**Important:**
+
+- Never commit your `.env` file or actual API keys to GitHub.
+- Keep your application credentials private.
+- Use environment variables to provide credentials securely.
+- The application displays whether the OpenAI and Tavily API keys are configured without displaying their actual values.
 
 ## Future Improvements
 
@@ -317,11 +375,11 @@ Potential areas for extending the system include:
 - **Iterative Research:** Allow agents to perform additional searches when the gathered information is insufficient.
 - **Report Refinement:** Introduce a feedback loop between the Writer and Critic to improve reports based on evaluation results.
 - **Source Management:** Collect and display source URLs and references alongside generated reports.
-- **Advanced Retrieval:** Explore additional retrieval strategies and information extraction techniques.
-- **Agent Orchestration:** Explore LangGraph for more advanced workflows, conditional execution, and state management.
-- **Research Evaluation:** Introduce evaluation mechanisms to assess the quality, relevance, and factual accuracy of generated reports.
-- **User Experience:** Improve the Streamlit interface with research progress indicators, report downloads, and history management.
-
+- **Advanced Retrieval:** Explore additional retrieval and information extraction techniques.
+- **Agent Orchestration:** Explore LangGraph for more customized workflows, conditional execution, and state management.
+- **Research Evaluation:** Introduce more comprehensive evaluation mechanisms to assess the relevance, accuracy, and quality of generated reports.
+- **User Experience:** Add research history, progress tracking, and additional report export formats.
+- **Authentication Improvements:** Introduce more robust user management and per-user access controls.
 ---
 
-**Note:** This project is intended to demonstrate how multiple AI agents and processing chains can collaborate to automate a research workflow. It can be extended with additional agents, tools, and orchestration capabilities to support more advanced research applications.
+**Note:** This project demonstrates how specialized AI agents and LLM-powered chains can collaborate to automate a research workflow, from web search and content extraction to report generation and evaluation.
