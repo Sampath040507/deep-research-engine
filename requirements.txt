@@ -1,0 +1,31 @@
+# LangChain and LCEL
+langchain
+langchain-core
+langchain-openai
+langchain-community
+
+# OpenAI
+openai
+
+# Agent orchestration and ReAct agents
+# langgraph
+
+# Tavily search integration
+langchain-tavily
+
+# Tavily Search Tool
+tavily-python
+
+# Web scraping
+beautifulsoup4
+requests
+lxml
+
+# Environment variable management
+python-dotenv
+
+## Logging / debugging (optional but recommended)
+rich
+
+#for UI
+streamlit
